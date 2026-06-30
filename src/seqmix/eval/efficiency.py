@@ -47,6 +47,9 @@ def benchmark_decode(model: LanguageModel, prompt_len: int, gen_len: int,
                      batch_size: int = 1, device=None) -> Dict:
     device = device or get_device()
     model = model.to(device).eval()
+    # keep all decode positions within the model's positional range
+    max_pos = model.config.max_seq_len
+    prompt_len = max(1, min(prompt_len, max_pos - gen_len))
     idx = torch.randint(0, model.config.vocab_size, (batch_size, prompt_len), device=device)
 
     caches = model.decode_step_init(batch_size, device)

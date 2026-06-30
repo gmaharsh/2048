@@ -24,7 +24,7 @@ from seqmix.train import train_lm  # noqa: E402
 from seqmix.utils import append_jsonl  # noqa: E402
 
 SCALE = {
-    "demo": dict(d_model=128, n_layers=3, seq_len=128, steps=1500, batch=32, n_bytes=400_000, vocab=64),
+    "demo": dict(d_model=128, n_layers=3, seq_len=96, steps=1200, batch=32, n_bytes=300_000, vocab=64),
     "full": dict(d_model=512, n_layers=8, seq_len=512, steps=20000, batch=32, n_bytes=50_000_000, vocab=256),
 }
 
