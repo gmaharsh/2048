@@ -38,7 +38,7 @@ def main():
     args = ap.parse_args()
 
     seq_len, vocab = (48, 32) if args.scale == "demo" else (128, 64)
-    steps = 700 if args.scale == "demo" else 8000
+    steps = 900 if args.scale == "demo" else 8000
     syn = SyntheticConfig(task="mqar", seq_len=seq_len, vocab_size=vocab,
                           num_kv_pairs=4, num_queries=4, seed=0)
     out = args.out or f"results/mech/{args.scale}.json"

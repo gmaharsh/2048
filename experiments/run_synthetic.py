@@ -27,7 +27,7 @@ SWEEPS = {
         "mha": [1, 2, 4],
         "swa": [4, 8, 16, 32],
         "mla": [8, 16, 32, 64],
-        "mamba": [4, 16],
+        "mamba": [16],
     },
     "full": {
         "mha": [1, 2, 4, 8],
@@ -39,7 +39,7 @@ SWEEPS = {
 
 SCALE_DEFAULTS = {
     # demo is sized to finish on a single CPU (pure-PyTorch Mamba is the bottleneck).
-    "demo": dict(d_model=64, n_layers=2, seq_len=48, vocab=20, kv=3, steps=900, batch=32),
+    "demo": dict(d_model=96, n_layers=2, seq_len=64, vocab=20, kv=3, steps=1200, batch=32),
     "full": dict(d_model=256, n_layers=4, seq_len=256, vocab=64, kv=16, steps=8000, batch=64),
 }
 
