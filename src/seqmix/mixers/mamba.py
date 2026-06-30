@@ -35,13 +35,11 @@ def _selective_scan_py(deltaA: torch.Tensor, deltaBx: torch.Tensor, C: torch.Ten
     return torch.stack(ys, dim=1)
 
 
-# TorchScript-compiled version runs the time loop in C++ (much faster on CPU,
-# where the official CUDA kernel is unavailable). Falls back to eager on any
-# scripting failure so correctness/portability are never compromised.
-try:
-    _selective_scan = torch.jit.script(_selective_scan_py)
-except Exception:  # pragma: no cover - environment dependent
-    _selective_scan = _selective_scan_py
+# NOTE: we deliberately use the eager scan. TorchScript-compiling this loop was
+# measured to *slow down* CPU autograd (the scripted backward is inefficient on
+# CPU), and the official CUDA kernel is the intended fast path on GPU. The eager
+# reference is correct and portable.
+_selective_scan = _selective_scan_py
 
 
 class MambaMixer(SequenceMixer):

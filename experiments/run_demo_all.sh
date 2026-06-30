@@ -11,8 +11,11 @@ python3 experiments/run_synthetic.py --task mqar --scale demo
 echo "=== Phase 1b: induction frontier ==="
 python3 experiments/run_synthetic.py --task induction --scale demo
 
-echo "=== Phase 2: language modeling (perplexity vs params/cache) ==="
+echo "=== Phase 2: language modeling on synthetic recall corpus ==="
 python3 experiments/run_lm.py --scale demo
+
+echo "=== Phase 2b: language modeling on TinyStories ==="
+python3 experiments/run_lm.py --scale demo --dataset tinystories
 
 echo "=== compute/memory profiling ==="
 python3 experiments/run_efficiency.py --scale demo

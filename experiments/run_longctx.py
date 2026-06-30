@@ -28,7 +28,7 @@ def main():
     args = ap.parse_args()
 
     if args.scale == "demo":
-        seq_len, vocab, steps, d_model, n_layers = 96, 48, 1000, 96, 2
+        seq_len, vocab, steps, d_model, n_layers = 64, 48, 700, 96, 2
     else:
         seq_len, vocab, steps, d_model, n_layers = 1024, 64, 8000, 256, 4
 

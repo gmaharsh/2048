@@ -23,7 +23,7 @@ from seqmix.utils import save_json  # noqa: E402
 
 
 def train_model(mixer, syn, vocab, seq_len, steps, device, mixer_kwargs=None):
-    mc = ModelConfig(vocab_size=vocab, max_seq_len=seq_len, d_model=96, n_layers=2,
+    mc = ModelConfig(vocab_size=vocab, max_seq_len=seq_len, d_model=64, n_layers=2,
                      n_heads=4, mixer=mixer, mixer_kwargs=mixer_kwargs or {})
     tc = TrainConfig(steps=steps, batch_size=32, lr=1e-3, warmup=max(50, steps // 20),
                      eval_every=steps, eval_iters=40, seed=0, device=device)
@@ -38,7 +38,7 @@ def main():
     args = ap.parse_args()
 
     seq_len, vocab = (48, 32) if args.scale == "demo" else (128, 64)
-    steps = 1000 if args.scale == "demo" else 8000
+    steps = 700 if args.scale == "demo" else 8000
     syn = SyntheticConfig(task="mqar", seq_len=seq_len, vocab_size=vocab,
                           num_kv_pairs=4, num_queries=4, seed=0)
     out = args.out or f"results/mech/{args.scale}.json"
