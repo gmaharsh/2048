@@ -7,7 +7,9 @@ with every point so the analysis can present ppl-vs-params (compute-matched)
 and ppl-vs-cache (memory-matched) Pareto views.
 
 By default it trains on an offline synthetic recall corpus so it runs without
-internet; pass --text-file to use a real corpus (e.g. enwik8).
+internet. Pass --dataset tinystories to train on a capped slice of the real
+TinyStories corpus (downloaded and cached), or --text-file for a local corpus
+(e.g. enwik8).
 """
 
 from __future__ import annotations
@@ -35,6 +37,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--scale", default="demo", choices=["demo", "full"])
     ap.add_argument("--mixers", nargs="+", default=["mha", "swa", "mla", "mamba"])
+    ap.add_argument("--dataset", default="synthetic", choices=["synthetic", "tinystories"])
     ap.add_argument("--text-file", default=None)
     ap.add_argument("--device", default=None)
     ap.add_argument("--seed", type=int, default=0)
@@ -42,12 +45,22 @@ def main():
     args = ap.parse_args()
 
     d = SCALE[args.scale]
-    out = args.out or f"results/lm/{args.scale}.jsonl"
+    if args.out:
+        out = args.out
+    elif args.text_file:
+        out = f"results/lm/{args.scale}_file.jsonl"
+    elif args.dataset == "tinystories":
+        out = f"results/lm/{args.scale}_tinystories.jsonl"
+    else:
+        out = f"results/lm/{args.scale}.jsonl"
     if os.path.exists(out):
         os.remove(out)
 
     if args.text_file:
         dataset = ByteDataset.from_file(args.text_file, max_bytes=d["n_bytes"])
+        vocab = 256
+    elif args.dataset == "tinystories":
+        dataset = ByteDataset.from_tinystories(split="valid", max_bytes=d["n_bytes"])
         vocab = 256
     else:
         dataset = ByteDataset.synthetic_recall_corpus(n_bytes=d["n_bytes"], vocab_size=d["vocab"], seed=args.seed)

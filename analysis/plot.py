@@ -66,8 +66,9 @@ def plot_frontier(task: str, scale: str = "demo"):
     return out
 
 
-def plot_lm(scale: str = "demo"):
-    rows = _load_jsonl(os.path.join(ROOT, "results", "lm", f"{scale}.jsonl"))
+def plot_lm(scale: str = "demo", variant: str = ""):
+    suffix = f"_{variant}" if variant else ""
+    rows = _load_jsonl(os.path.join(ROOT, "results", "lm", f"{scale}{suffix}.jsonl"))
     if not rows:
         return None
     fig, axes = plt.subplots(1, 2, figsize=(9.0, 3.8))
@@ -86,9 +87,11 @@ def plot_lm(scale: str = "demo"):
     for ax in axes:
         ax.grid(True, alpha=0.3)
     axes[0].legend(fontsize=8)
+    title = f"_{variant}" if variant else ""
+    fig.suptitle(f"Language modeling{(' (' + variant + ')') if variant else ''}", y=1.02)
     fig.tight_layout()
-    out = os.path.join(FIG_DIR, f"lm_{scale}.png")
-    fig.savefig(out, dpi=150)
+    out = os.path.join(FIG_DIR, f"lm_{scale}{title}.png")
+    fig.savefig(out, dpi=150, bbox_inches="tight")
     plt.close(fig)
     return out
 
@@ -188,6 +191,7 @@ def main():
     for task in ["mqar", "selective_copy", "induction"]:
         made.append(plot_frontier(task, scale))
     made.append(plot_lm(scale))
+    made.append(plot_lm(scale, variant="tinystories"))
     made.append(plot_efficiency(scale))
     made.append(plot_longctx(scale))
     made.append(plot_mechanistic(scale))

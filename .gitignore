@@ -15,3 +15,5 @@ runs/
 
 # figures are regenerated; keep paper/figures tracked if committed explicitly
 analysis/_scratch/
+
+results/data/

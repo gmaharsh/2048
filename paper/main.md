@@ -101,7 +101,10 @@ and an analytic `state_bytes(seq_len)` accounting of its cache/state footprint.
 
 Multi-Query Associative Recall (MQAR), selective copying, induction, and a
 passkey needle-in-a-haystack task with controllable depth; plus byte-level
-language modeling on a corpus with injected long-range repetition.
+language modeling on (a) a synthetic corpus with injected long-range repetition
+and (b) the real **TinyStories** corpus, a collection of short, simple stories
+that tiny models can actually fit, giving a natural-text complement to the
+synthetic recall corpus.
 
 ## 4. Experiments
 
@@ -126,8 +129,10 @@ MHA's accuracy at a markedly smaller cache. Mamba's recall is bounded by
 ![LM quality vs compute and memory](figures/lm_demo.png)
 
 We report validation perplexity against non-embedding parameter count
-(compute-matched view) and against cache/state bytes (memory-matched view) on a
-recall-heavy synthetic corpus.
+(compute-matched view) and against cache/state bytes (memory-matched view), on
+both a recall-heavy synthetic corpus and the real TinyStories corpus
+(`--dataset tinystories`). The synthetic corpus stresses long-range recall;
+TinyStories checks that the ordering also holds on natural text.
 
 ### 4.3 Compute and memory
 

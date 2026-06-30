@@ -42,7 +42,8 @@ bash experiments/run_demo_all.sh
 
 # or individual phases
 PYTHONPATH=src python experiments/run_synthetic.py  --task mqar --scale demo   # Phase 1 frontier
-PYTHONPATH=src python experiments/run_lm.py         --scale demo               # Phase 2 perplexity
+PYTHONPATH=src python experiments/run_lm.py         --scale demo               # Phase 2 perplexity (synthetic corpus)
+PYTHONPATH=src python experiments/run_lm.py         --scale demo --dataset tinystories  # Phase 2 on real TinyStories text
 PYTHONPATH=src python experiments/run_efficiency.py --scale demo               # compute/memory
 PYTHONPATH=src python experiments/run_longctx.py    --scale demo               # Phase 3 passkey
 PYTHONPATH=src python experiments/run_mechanistic.py --scale demo              # Phase 4 interventions
@@ -59,7 +60,8 @@ src/seqmix/
   model.py             shared decoder backbone (only the mixer changes)
   rope.py              rotary embeddings (+ MLA decoupled RoPE)
   mixers/              mha.py, mla.py, mamba.py (+ SWA), registry, base interface
-  data/                synthetic.py (MQAR, selective-copy, induction, passkey), text.py
+  data/                synthetic.py (MQAR, selective-copy, induction, passkey),
+                       text.py (synthetic recall corpus, local files, TinyStories loader)
   train.py             AdamW + cosine training loop
   eval/                synthetic.py (frontier sweep), lm.py, efficiency.py, longctx.py
   mech/                interventions.py (layer knockout, residual patching)

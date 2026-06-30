@@ -8,10 +8,17 @@ and without internet access.
 
 from __future__ import annotations
 
+import os
+import urllib.request
 from typing import Optional, Tuple
 
 import numpy as np
 import torch
+
+TINYSTORIES_URLS = {
+    "valid": "https://huggingface.co/datasets/roneneldan/TinyStories/resolve/main/TinyStories-valid.txt",
+    "train": "https://huggingface.co/datasets/roneneldan/TinyStories/resolve/main/TinyStories-train.txt",
+}
 
 
 class ByteDataset:
@@ -24,6 +31,37 @@ class ByteDataset:
         with open(path, "rb") as f:
             raw = f.read() if max_bytes is None else f.read(max_bytes)
         return cls(np.frombuffer(raw, dtype=np.uint8).copy(), vocab_size=256)
+
+    @classmethod
+    def from_url(cls, url: str, cache_path: str, max_bytes: int = 5_000_000) -> "ByteDataset":
+        """Stream up to ``max_bytes`` from ``url`` (following redirects) and
+        cache to ``cache_path`` for reuse. Byte-level, so vocab_size = 256."""
+        if not (os.path.exists(cache_path) and os.path.getsize(cache_path) >= min(max_bytes, 1)):
+            os.makedirs(os.path.dirname(os.path.abspath(cache_path)), exist_ok=True)
+            req = urllib.request.Request(url, headers={"User-Agent": "seqmix/0.1"})
+            with urllib.request.urlopen(req, timeout=120) as resp, open(cache_path, "wb") as out:
+                remaining = max_bytes
+                while remaining > 0:
+                    chunk = resp.read(min(1 << 20, remaining))
+                    if not chunk:
+                        break
+                    out.write(chunk)
+                    remaining -= len(chunk)
+        return cls.from_file(cache_path, max_bytes=max_bytes)
+
+    @classmethod
+    def from_tinystories(cls, split: str = "valid", max_bytes: int = 5_000_000,
+                         cache_dir: str = "results/data") -> "ByteDataset":
+        """Load a capped slice of the TinyStories corpus (byte-level).
+
+        TinyStories is a corpus of short, simple synthetic stories that tiny
+        models can actually learn -- a good real-text complement to the
+        synthetic recall corpus for the Phase 2 perplexity comparison.
+        """
+        if split not in TINYSTORIES_URLS:
+            raise ValueError(f"split must be one of {list(TINYSTORIES_URLS)}")
+        cache_path = os.path.join(cache_dir, f"tinystories-{split}.txt")
+        return cls.from_url(TINYSTORIES_URLS[split], cache_path, max_bytes=max_bytes)
 
     @classmethod
     def synthetic_recall_corpus(cls, n_bytes: int = 1_000_000, vocab_size: int = 64,

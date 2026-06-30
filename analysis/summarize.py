@@ -39,11 +39,13 @@ def summarize_frontier(task, scale):
               f"{r['state_bytes']:>9} {r['params']:>9}")
 
 
-def summarize_lm(scale):
-    rows = load_jsonl(os.path.join(ROOT, "results", "lm", f"{scale}.jsonl"))
+def summarize_lm(scale, variant=""):
+    suffix = f"_{variant}" if variant else ""
+    rows = load_jsonl(os.path.join(ROOT, "results", "lm", f"{scale}{suffix}.jsonl"))
     if not rows:
         return
-    print(f"\n## Language modeling ({scale})")
+    label = variant or "synthetic"
+    print(f"\n## Language modeling ({scale}, {label})")
     print(f"{'mixer':6} {'val_ppl':>8} {'params':>9} {'cache_B':>9}")
     for r in rows:
         print(f"{r['mixer']:6} {r['val_ppl']:>8.3f} {r['params']:>9} {r['state_bytes']:>9}")
@@ -91,6 +93,7 @@ def main():
     for task in ["mqar", "selective_copy", "induction"]:
         summarize_frontier(task, scale)
     summarize_lm(scale)
+    summarize_lm(scale, variant="tinystories")
     summarize_efficiency(scale)
     summarize_longctx(scale)
     summarize_mech(scale)
