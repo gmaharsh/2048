@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.ipynb_checkpoints/
+*.egg-info/
+build/
+dist/
+
+# experiment outputs
+results/
+runs/
+*.pt
+*.ckpt
+
+# figures are regenerated; keep paper/figures tracked if committed explicitly
+analysis/_scratch/
