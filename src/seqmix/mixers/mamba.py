@@ -23,6 +23,27 @@ from ..config import ModelConfig
 from .base import SequenceMixer
 
 
+def _selective_scan_py(deltaA: torch.Tensor, deltaBx: torch.Tensor, C: torch.Tensor) -> torch.Tensor:
+    """Sequential selective scan. deltaA/deltaBx: (B,T,d_inner,d_state),
+    C: (B,T,d_state). Returns y: (B,T,d_inner)."""
+    B, T, di, ds = deltaA.shape
+    h = torch.zeros(B, di, ds, device=deltaA.device, dtype=deltaA.dtype)
+    ys = []
+    for t in range(T):
+        h = deltaA[:, t] * h + deltaBx[:, t]
+        ys.append((h * C[:, t].unsqueeze(1)).sum(-1))
+    return torch.stack(ys, dim=1)
+
+
+# TorchScript-compiled version runs the time loop in C++ (much faster on CPU,
+# where the official CUDA kernel is unavailable). Falls back to eager on any
+# scripting failure so correctness/portability are never compromised.
+try:
+    _selective_scan = torch.jit.script(_selective_scan_py)
+except Exception:  # pragma: no cover - environment dependent
+    _selective_scan = _selective_scan_py
+
+
 class MambaMixer(SequenceMixer):
     is_attention = False
 
@@ -77,12 +98,7 @@ class MambaMixer(SequenceMixer):
         # Discretise and scan: h_t = exp(delta*A) h_{t-1} + delta*B*x_t
         deltaA = torch.exp(delta.unsqueeze(-1) * A)       # (B,T,d_inner,d_state)
         deltaBx = delta.unsqueeze(-1) * Bmat.unsqueeze(2) * xb.unsqueeze(-1)
-        h = x.new_zeros(B, self.d_inner, self.d_state)
-        ys = []
-        for t in range(T):
-            h = deltaA[:, t] * h + deltaBx[:, t]
-            ys.append((h * Cmat[:, t].unsqueeze(1)).sum(-1))  # (B,d_inner)
-        y = torch.stack(ys, dim=1)                        # (B,T,d_inner)
+        y = _selective_scan(deltaA, deltaBx, Cmat)        # (B,T,d_inner)
         y = y + xb * self.D
         y = y * F.silu(z)
         return self.out_proj(y)
