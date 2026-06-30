@@ -21,6 +21,15 @@ placing **MLA** on the controlled recall–memory–compute frontier *next to* M
 and sliding-window attention at small, matched scale, with a mechanistic account
 of the failure modes. That is the contribution here. See `paper/` for the draft.
 
+## Run on Google Colab (recommended for GPU)
+
+The pure-PyTorch reference Mamba is slow on CPU; a GPU fixes this. Open
+[`notebooks/colab_quickstart.ipynb`](notebooks/colab_quickstart.ipynb) in Colab
+(set **Runtime -> GPU**) and run top to bottom. It clones the repo, installs
+deps, runs the phases at `--scale full --device cuda`, and displays the figures
+inline. To load it: in Colab, **File -> Open notebook -> GitHub**, paste the repo
+URL, and pick the notebook (or upload the `.ipynb`).
+
 ## Install
 
 ```bash
@@ -65,6 +74,7 @@ src/seqmix/
   train.py             AdamW + cosine training loop
   eval/                synthetic.py (frontier sweep), lm.py, efficiency.py, longctx.py
   mech/                interventions.py (layer knockout, residual patching)
+notebooks/             colab_quickstart.ipynb (GPU-ready end-to-end run)
 experiments/           one driver per phase + run_demo_all.sh
 analysis/plot.py       builds all figures from results/
 tests/                 correctness tests (decode equivalence, causality, window, ...)
