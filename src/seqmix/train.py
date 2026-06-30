@@ -88,6 +88,7 @@ def train_synthetic(model_cfg: ModelConfig, syn_cfg: SyntheticConfig,
         "analytic_state_bytes": model.analytic_state_bytes(syn_cfg.seq_len),
         "model_cfg": model_cfg,
         "syn_cfg": syn_cfg,
+        "model": model,  # not JSON-serialisable; strip before saving
     }
 
 
@@ -132,6 +133,7 @@ def train_lm(model_cfg: ModelConfig, dataset: ByteDataset, train_cfg: TrainConfi
         "non_embedding_params": count_non_embedding_parameters(model),
         "analytic_state_bytes": model.analytic_state_bytes(train_cfg.seq_len),
         "model_cfg": model_cfg,
+        "model": model,  # not JSON-serialisable; strip before saving
     }
 
 

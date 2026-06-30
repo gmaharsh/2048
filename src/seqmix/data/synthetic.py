@@ -33,6 +33,7 @@ class SyntheticConfig:
     num_kv_pairs: int = 8       # mqar
     num_queries: Optional[int] = None  # mqar (defaults to num_kv_pairs)
     num_tokens: int = 16        # selective_copy: number of content tokens
+    needle_depth_frac: Optional[float] = None  # passkey: fixed depth in [0,1], else random
     seed: int = 0
 
     def resolved_queries(self) -> int:
@@ -116,10 +117,35 @@ def make_induction(batch_size: int, cfg: SyntheticConfig, rng: np.random.Generat
     return torch.from_numpy(inputs), torch.from_numpy(targets)
 
 
+def make_passkey(batch_size: int, cfg: SyntheticConfig, rng: np.random.Generator):
+    """Needle-in-a-haystack: a (key,value) needle sits at some depth inside a
+    field of random distractor tokens; the last position queries the key and
+    must recall the value. Used to probe long-context retrieval vs. depth."""
+    L, V = cfg.seq_len, cfg.vocab_size
+    key_tok = V - 1                      # dedicated needle key
+    filler_vocab = np.arange(1, V - 1)
+
+    inputs = np.empty((batch_size, L), dtype=np.int64)
+    targets = np.full((batch_size, L), -100, dtype=np.int64)
+    for b in range(batch_size):
+        inputs[b] = rng.choice(filler_vocab, size=L, replace=True)
+        value = rng.integers(1, V - 1)
+        if cfg.needle_depth_frac is None:
+            depth = rng.integers(0, L - 3)
+        else:
+            depth = int(cfg.needle_depth_frac * (L - 3))
+        inputs[b, depth] = key_tok
+        inputs[b, depth + 1] = value
+        inputs[b, L - 1] = key_tok       # query at the end
+        targets[b, L - 1] = value
+    return torch.from_numpy(inputs), torch.from_numpy(targets)
+
+
 _GENERATORS = {
     "mqar": make_mqar,
     "selective_copy": make_selective_copy,
     "induction": make_induction,
+    "passkey": make_passkey,
 }
 
 
