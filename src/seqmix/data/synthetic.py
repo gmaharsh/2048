@@ -45,23 +45,40 @@ class SyntheticConfig:
 # ---------------------------------------------------------------------------
 
 def make_mqar(batch_size: int, cfg: SyntheticConfig, rng: np.random.Generator):
+    """Multi-Query Associative Recall (Zoology formulation).
+
+    Two properties are essential for the task to be solvable by recall and to
+    avoid spurious induction shortcuts:
+
+    * **Disjoint key/value vocabularies** -- a query key can never coincide with
+      a value token, so "the token after this key" is unambiguous.
+    * **Distinct query keys** -- each queried key has exactly one prior
+      occurrence (its key/value pair), so the most-recent-occurrence induction
+      rule points at the correct value. (Repeated query keys would make the
+      previous occurrence another query, breaking recall -- a subtle trap.)
+    """
     L, V, N = cfg.seq_len, cfg.vocab_size, cfg.num_kv_pairs
     Q = cfg.resolved_queries()
     assert 2 * N + Q <= L, "sequence too short for #pairs and #queries"
-    assert N + 1 < V, "vocab too small for #pairs"
+    assert Q <= N, "num_queries must be <= num_kv_pairs (queries use distinct keys)"
+
+    # Split the (non-blank) vocabulary into disjoint key and value token sets.
+    half = max(1, (V - 1) // 2)
+    key_vocab = np.arange(1, 1 + half)
+    val_vocab = np.arange(1 + half, V)
+    assert len(key_vocab) >= N and len(val_vocab) >= 1, "vocab too small for #pairs"
 
     inputs = np.full((batch_size, L), BLANK, dtype=np.int64)
     targets = np.full((batch_size, L), -100, dtype=np.int64)
 
     for b in range(batch_size):
-        symbols = rng.choice(np.arange(1, V), size=N, replace=False)
-        values = rng.choice(np.arange(1, V), size=N, replace=True)
-        # key/value pairs packed at the front
+        symbols = rng.choice(key_vocab, size=N, replace=False)
+        values = rng.choice(val_vocab, size=N, replace=True)
         inputs[b, 0:2 * N:2] = symbols
         inputs[b, 1:2 * N:2] = values
-        # queries placed at random positions in the remainder
+        # queries: distinct keys placed at random positions in the remainder
         positions = rng.choice(np.arange(2 * N, L), size=Q, replace=False)
-        which = rng.integers(0, N, size=Q)
+        which = rng.permutation(N)[:Q]
         inputs[b, positions] = symbols[which]
         targets[b, positions] = values[which]
     return torch.from_numpy(inputs), torch.from_numpy(targets)
